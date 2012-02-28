@@ -1,11 +1,14 @@
 couchclient
 ===========
-A light-weight CouchDB client for read-only requests of documents and views.
+A light-weight CouchDB client for read-only requests of documents and views. It
+is not meant to be a full-featured client library or replacement for couchdb-python.
+Instead the focus is on being a read-only view of documents that would not
+necessarily be represented as CouchDB documents to the application requesting them.
 
-By default it strips couchdbisms (_id, _rev) from documents.
+By default it strips couchdbisms ("_id", "_rev") from documents.
 
 Views are transformed to a dictionary from the CouchDB return representation to
-key value pairs from the view. For example if a view is returned from CouchDB as:
+key-value pairs from the view. For example if a view is returned from CouchDB as:
 
     {
         "total_rows": 2,
@@ -34,7 +37,7 @@ key value pairs from the view. For example if a view is returned from CouchDB as
         ]
     }
 
-get_view will return a dictionary of:
+CouchDb.get_view will return a dictionary of:
 
     {'abc': {'baz': 'qux', 'foo': 'bar'},
      'corge': {'baz': 'garply', 'foo': 'grault'}}

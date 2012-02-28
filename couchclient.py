@@ -5,6 +5,7 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@myyearbook.com'
 __since__ = '2012-01-30'
+__version__ = '1.1.0'
 
 import logging
 import requests
@@ -24,12 +25,12 @@ class CouchDB(object):
         name.
 
         :param str host: The FQDN needed to make requests to the CouchDB server
-        :param str port: The port to query CouchDB on
+        :param int port: The port to query CouchDB on
         :param str database: The database name for CouchDB requests
         :param bool strip_attributes: Remove _id and _rev from result
 
         """
-        self._logger = logging.getLogger('couchclient.CouchDB')
+        self._logger = logging.getLogger(__name__)
 
         # Get the server to use from DNSConfig
         self._server = {'host': host, 'port': port}

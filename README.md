@@ -37,7 +37,7 @@ key-value pairs from the view. For example if a view is returned from CouchDB as
         ]
     }
 
-CouchDb.get_view will return a dictionary of:
+CouchDB.get_view will return a dictionary of:
 
     {'abc': {'baz': 'qux', 'foo': 'bar'},
      'corge': {'baz': 'garply', 'foo': 'grault'}}

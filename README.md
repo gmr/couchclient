@@ -1,19 +1,55 @@
 couchclient
 ===========
-
 A light-weight CouchDB client for read-only requests of documents and views.
+
+By default it strips couchdbisms (_id, _rev) from documents.
+
+Views are transformed to a dictionary from the CouchDB return representation to
+key value pairs from the view. For example if a view is returned from CouchDB as:
+
+    {
+        "total_rows": 2,
+        "offset": 0,
+        "rows": [
+            {
+                "id": "abc",
+                "key": "foo",
+                "value": {
+                    "_id": "abc",
+                    "_rev": "1-93dd63045e084f1f298ca675d230d3f7",
+                    "foo": "bar",
+                    "baz": "qux"
+                }
+            },
+            {
+                "id": "quux",
+                "key": "corge",
+                "value": {
+                    "_id": "quux",
+                    "_rev": "2-33de63045e084f14298ca675d230d3e8",
+                    "foo": "grault",
+                    "baz": "garply"
+                }
+            }
+        ]
+    }
+
+get_view will return a dictionary of:
+
+    {'abc': {'baz': 'qux', 'foo': 'bar'},
+     'corge': {'baz': 'garply', 'foo': 'grault'}}
 
 Examples
 --------
 
     import couchclient
-    config = couchclient.CouchDB('config.scs.myyearbook.com', 80,
-                                 'com_myyearbook_messaging')
-    seedlist = config.get_document('seedlist')
+    config = couchclient.CouchDB('couchdb.myhost.com', 5984,
+                                 'my_database')
+    seedlist = config.get_document('my_document')
 
-    config = couchclient.CouchDB('config.scs.myyearbook.com', 80,
-                                 'com_myyearbook_messaging_messages')
-    messages = config.get_view('status', 'messages')
+    config = couchclient.CouchDB('couchdb.myhost.com', 5984,
+                                 'my_database')
+    messages = config.get_view('my_view_document', 'my_view')
     print messages
 
 API
@@ -125,5 +161,5 @@ API
 
 Requirements
 ------------
-requests
-simplejson
+- requests
+- simplejson

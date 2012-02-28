@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(name='couchclient',
-      version='1.1.0',
+      version='1.1.1',
       description=('Light-weight read-only CouchDB client for loading '
                    'documents and views'),
       maintainer='Gavin M. Roy',
       maintainer_email='gmr@myyearbook.com',
-      url='http://github.com/Python/couchclient',
+      url='http://github.com/gmr/couchclient',
       install_requires=['requests', 'simplejson'],
       tests_require=['mock'],
       py_modules = ['couchclient'],

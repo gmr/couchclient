@@ -43,10 +43,15 @@ Examples
 --------
 
     import couchclient
-    config = couchclient.CouchDB('couchdb.myhost.com', 5984,
-                                 'my_database')
-    seedlist = config.get_document('my_document')
 
+    # Create a new client, if you use a SSL port, it will use the proper scheme
+    config = couchclient.CouchDB('couchdb.myhost.com', 5984, 'my_database')
+
+    # Get a single document
+    document = config.get_document('my_document')
+    print document
+
+    # Fetch a view
     config = couchclient.CouchDB('couchdb.myhost.com', 5984,
                                  'my_database')
     messages = config.get_view('my_view_document', 'my_view')

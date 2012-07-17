@@ -5,11 +5,12 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@myyearbook.com'
 __since__ = '2012-01-30'
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 import logging
 import requests
 import simplejson
+import urllib
 
 
 class CouchDB(object):
@@ -60,7 +61,7 @@ class CouchDB(object):
         :returns str: The document URL
 
         """
-        return '%s/%s' % (self._base_url, document_id)
+        return '%s/%s' % (self._base_url, self._quote(document_id))
 
     def _error(self, response):
         """Raise the DocumentNotFound error, building an error message from
@@ -125,6 +126,15 @@ class CouchDB(object):
         """
         self._logger.debug('Decoding JSON string: %s', document)
         return simplejson.loads(document)
+
+    def _quote(self, value):
+        """Return a quoted value, escaping bits for CouchDB.
+
+        :param str value: The value to quote
+        :rtype: str
+
+        """
+        return urllib.quote(value, '')
 
     def _strip(self, document):
         """Remove the attributes specified in CouchDB._COUCHDB_ATTRIBUTES

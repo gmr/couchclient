@@ -155,3 +155,10 @@ def test_get_view():
     client = couchclient.CouchDB(**_HTTP_SERVER)
     client._http_request = _mock_http_view_request
     assert client.get_view('abc', 'def') == expectation
+
+
+def test_quote():
+    client = couchclient.CouchDB(**_HTTP_SERVER)
+    assert client._quote('/hi/there/test') == '%2Fhi%2Fthere%2Ftest'
+
+

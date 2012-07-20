@@ -5,12 +5,13 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@myyearbook.com'
 __since__ = '2012-01-30'
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 import logging
 import requests
-import simplejson
 import urllib
+
+logger = logging.getLogger(__name__)
 
 
 class CouchDB(object):
@@ -31,8 +32,6 @@ class CouchDB(object):
         :param bool strip_attributes: Remove _id and _rev from result
 
         """
-        self._logger = logging.getLogger(__name__)
-
         # Get the server to use from DNSConfig
         self._server = {'host': host, 'port': port}
 
@@ -72,7 +71,7 @@ class CouchDB(object):
         :raises: DocumentRetrievalFailure
 
         """
-        document = self._json_decode(response.content)
+        document = response.json
         error_message = 'Error: %s, reason: %s' % (document['error'],
                                                    document['reason'])
         if response.status_code == 404:
@@ -98,13 +97,13 @@ class CouchDB(object):
 
         # If the status code is 200, it was a successful request
         if response.status_code == 200:
-            self._logger.debug('Document retrieved successfully')
-            return self._json_decode(response.content)
+            logger.debug('Document retrieved successfully')
+            return response.json
 
         # Raise the error that we did not find the document
         self._error(response)
 
-    def _http_request(self, url):  # pragma: no cover
+    def _http_request(self, url):
         """Make the request to the CouchDB server and return the result
 
         :param str url: The URL to request
@@ -113,19 +112,8 @@ class CouchDB(object):
         :raises: DocumentRetrievalFailure
 
         """
-        self._logger.debug('Making HTTP GET request to %s', url)
+        logger.debug('Making HTTP GET request to %s', url)
         return requests.get(url)
-
-    def _json_decode(self, document):
-        """JSON decode the given JSON string returning the object represented
-        by the JSON string.
-
-        :param str document: The JSON string
-        :returns list or dict: The object represented by the JSON string
-
-        """
-        self._logger.debug('Decoding JSON string: %s', document)
-        return simplejson.loads(document)
 
     def _quote(self, value):
         """Return a quoted value, escaping bits for CouchDB.
@@ -144,8 +132,8 @@ class CouchDB(object):
         :returns: dict
 
         """
-        self._logger.debug('Removing %r from %r',
-                           CouchDB._COUCHDB_ATTRIBUTES, document)
+        logger.debug('Removing %r from %r',
+                     CouchDB._COUCHDB_ATTRIBUTES, document)
         for attribute in CouchDB._COUCHDB_ATTRIBUTES:
             del document[attribute]
         return document
@@ -158,7 +146,7 @@ class CouchDB(object):
         :returns dict: Processed view data
 
         """
-        self._logger.debug('Transforming %i rows', len(document['rows']))
+        logger.debug('Transforming %i rows', len(document['rows']))
         view_data = dict()
         for row in document['rows']:
             view_data[row['key']] = row['value']
@@ -194,7 +182,6 @@ class CouchDB(object):
             document = self._strip(document)
 
         # Return the document
-        self._logger.debug('Returning %r', document)
         return document
 
     def get_view(self, document_id, view_name):

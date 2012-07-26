@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 test_client.py
 
@@ -12,7 +13,8 @@ sys.path.insert(0, '..')
 import mock
 import nose
 import couchclient
-import simplejson
+import json
+import unittest
 
 _HTTP_SERVER = {'host': 'unittest.info',
                 'port': 5984,
@@ -35,130 +37,96 @@ _VIEW_CONTENT = ('{"total_rows":40,"offset":0,"rows":[{"id":"activation",'
                  'ction":0}}}}]}')
 
 
-def _mock_http_document_request(url):
-    response = mock.Mock()
-    response.status_code = 200
-    response.request = mock.Mock()
-    response.request.url = url
-    response.content = _DOC_CONTENT
-    return response
+class CouchClientTests(unittest.TestCase):
 
+    def setUp(self):
+        self._client = couchclient.CouchDB(**_HTTP_SERVER)
 
-def _mock_http_view_request(url):
-    response = mock.Mock()
-    response.status_code = 200
-    response.request = mock.Mock()
-    response.request.url = url
-    response.content = _VIEW_CONTENT
-    return response
+    def test_http_base_url(self):
+        expectation = 'http://%(host)s:%(port)s/%(database)s' % _HTTP_SERVER
+        self.assertEqual(self._client._base_url, expectation)
 
+    def test_https_base_url(self):
+        expectation = 'https://%(host)s:%(port)s/%(database)s' % _HTTPS_SERVER
+        client = couchclient.CouchDB(**_HTTPS_SERVER)
+        self.assertEqual(client._base_url, expectation)
 
-def _mock_http_404_request(url):
-    response = mock.Mock()
-    response.status_code = 404
-    response.request = mock.Mock()
-    response.request.url = url
-    response.content = _404_ERROR
-    return response
+    def test_document_url(self):
+        test = _HTTP_SERVER.copy()
+        test['doc'] = 'test_document'
+        expectation = 'http://%(host)s:%(port)s/%(database)s/%(doc)s' % test
+        self.assertEqual(self._client._document_url(test['doc']), expectation)
 
+    def test_quote(self):
+        client = couchclient.CouchDB(**_HTTP_SERVER)
+        value = '/hi/there/test'
+        expectation = '%2Fhi%2Fthere%2Ftest'
+        self.assertEqual(client._quote(value), expectation)
 
-def _mock_http_500_request(url):
-    response = mock.Mock()
-    response.status_code = 500
-    response.request = mock.Mock()
-    response.request.url = url
-    response.content = _500_ERROR
-    return response
+    def test_deunicode(self):
+        value = {u'exchange': u'generate_email',
+                 u'vhost': u'messaging',
+                 u'host': u'rabbit19',
+                 u'user': u'rejected',
+                 u'pass': u'rabbitmq',
+                 u'port': 5672}
+        expectation = {u'exchange': 'generate_email',
+                       u'vhost': 'messaging',
+                       u'host': 'rabbit19',
+                       u'user': 'rejected',
+                       u'pass': 'rabbitmq',
+                       u'port': 5672}
+        self._client._deunicode(value)
+        self.assertDictEqual(value, expectation)
 
-
-def test_http_base_url():
-    expectation = 'http://%(host)s:%(port)s/%(database)s' % _HTTP_SERVER
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    assert client._base_url == expectation
-
-
-def test_https_base_url():
-    expectation = 'https://%(host)s:%(port)s/%(database)s' % _HTTPS_SERVER
-    client = couchclient.CouchDB(**_HTTPS_SERVER)
-    assert client._base_url == expectation
-
-
-def test_document_url():
-    test = _HTTP_SERVER.copy()
-    test['doc'] = 'test_document'
-    expectation = 'http://%(host)s:%(port)s/%(database)s/%(doc)s' % test
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    assert client._document_url(test['doc']) == expectation
-
-
-@nose.tools.raises(couchclient.DocumentNotFound)
-def test_404_error_response():
-    test = _HTTP_SERVER.copy()
-    test['doc'] = 'test_document'
-    url = 'http://%(host)s:%(port)s/%(database)s/%(doc)s' % test
-    response = _mock_http_404_request(url)
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._error(response)
-
-
-@nose.tools.raises(couchclient.DocumentRetrievalFailure)
-def test_500_error_response():
-    test = _HTTP_SERVER.copy()
-    test['doc'] = 'test_document'
-    url = 'http://%(host)s:%(port)s/%(database)s/%(doc)s' % test
-    response = _mock_http_500_request(url)
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._error(response)
-
-
-@nose.tools.raises(couchclient.DocumentNotFound)
-def test_404_get_couchdb_value():
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_404_request
-    client._get_couchdb_value('abc')
-
-
-@nose.tools.raises(couchclient.DocumentRetrievalFailure)
-def test_500_get_couchdb_value():
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_500_request
-    client._get_couchdb_value('abc')
-
-
-def test_get_couchdb_value_document():
-    expectation = simplejson.loads(_DOC_CONTENT)
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_document_request
-    assert client._get_couchdb_value('abc') == expectation
-
-
-def test_get_couchdb_value_view():
-    expectation = simplejson.loads(_VIEW_CONTENT)
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_view_request
-    assert client._get_couchdb_value('abc') == expectation
-
-
-def test_get_document():
-    expectation = simplejson.loads(_DOC_CONTENT)
-    del expectation['_id']
-    del expectation['_rev']
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_document_request
-    assert client.get_document('abc') == expectation
-
-
-def test_get_view():
-    test = simplejson.loads(_VIEW_CONTENT)
-    temp = test['rows'].pop(0)
-    expectation = {temp['key']: temp['value']}
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    client._http_request = _mock_http_view_request
-    assert client.get_view('abc', 'def') == expectation
-
-
-def test_quote():
-    client = couchclient.CouchDB(**_HTTP_SERVER)
-    assert client._quote('/hi/there/test') == '%2Fhi%2Fthere%2Ftest'
-
-
+    def test_deunicode_complex_with_unicode(self):
+        value = {
+            u"en-US": {
+                u"delivery_reason": {
+                    u"html_part": u"You have received this email from",
+                    u"text_part": u"You have received this email from"
+                }
+            },
+            u"es-ES": {
+                u"delivery_reason": {
+                    u"html_part": u"Has recibido este correo electrónico",
+                    u"text_part": u"Has recibido este correo electrónico"
+                }
+            },
+            u"other": {
+                u"values": [{u"delivery_reason": {
+                                u"html_part": u"You have received email from",
+                                u"text_part": u"You have received email from"
+                            }},
+                            {u"delivery_reason": {
+                                u"html_part": u"Has recibido este electrónico",
+                                u"text_part": u"Has recibido este electrónico"
+                            }}]
+                }
+        }
+        expectation = {
+            u"en-US": {
+                u"delivery_reason": {
+                    u"html_part": "You have received this email from",
+                    u"text_part": "You have received this email from"
+                }
+            },
+            u"es-ES": {
+                u"delivery_reason": {
+                    u"html_part": u"Has recibido este correo electrónico",
+                    u"text_part": u"Has recibido este correo electrónico"
+                }
+            },
+            u"other": {
+                u"values": [{u"delivery_reason": {
+                    "html_part": u"You have received email from",
+                    "text_part": u"You have received email from"
+                }},
+                {u"delivery_reason": {
+                    u"html_part": u"Has recibido este electrónico",
+                    u"text_part": u"Has recibido este electrónico"
+                }}]
+            }
+        }
+        self._client._deunicode(value)
+        self.assertDictEqual(value, expectation)

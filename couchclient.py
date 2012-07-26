@@ -5,7 +5,7 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@myyearbook.com'
 __since__ = '2012-01-30'
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 import logging
 import requests
@@ -52,6 +52,38 @@ class CouchDB(object):
                                   self._server['host'],
                                   self._server['port'],
                                   self._database)
+
+    def _deunicode(self, value):
+        """Iterate the keys in value removing unicode values if possible.
+
+        :param dict value: The dict to iterate
+
+        """
+        for key in value:
+            value[key] = self._process_node(value[key])
+
+    def _process_node(self, node):
+        """Process a node to strip unicode from it if possible.
+
+        :param unicode,list,dict,any node: The value to process
+        :rtype: any
+
+        """
+        if isinstance(node, unicode):
+            try:
+                return node.decode('ascii')
+            except UnicodeEncodeError:
+                return node
+        elif isinstance(node, dict):
+            for key in node:
+                self._process_node(node[key])
+            return node
+        elif isinstance(node, list):
+            for position in xrange(0, len(node)):
+                node[position] = self._process_node(node[position])
+            return node
+        logger.debug('Bypassing type: %r', type(node))
+        return node
 
     def _document_url(self, document_id):
         """Return the document URL for the given document_id
@@ -129,14 +161,12 @@ class CouchDB(object):
         from the passed in dictionary value.
 
         :param dict document: The returned document
-        :returns: dict
 
         """
         logger.debug('Removing %r from %r',
                      CouchDB._COUCHDB_ATTRIBUTES, document)
         for attribute in CouchDB._COUCHDB_ATTRIBUTES:
             del document[attribute]
-        return document
 
     def _view_data(self, document):
         """Returns the view data as a dictionary of values with the key being
@@ -168,7 +198,7 @@ class CouchDB(object):
         """Retrieve the document from the CouchDB server.
 
         :param str document_id: The document id to fetch
-        :returns: dict
+        :rtype: dict
         :raises: DocumentNotFound
         :raises: DocumentRetrievalFailure
 
@@ -179,7 +209,10 @@ class CouchDB(object):
         document = self._get_couchdb_value(url)
 
         if self._strip_attributes:
-            document = self._strip(document)
+            self._strip(document)
+
+        # Change unicode values to str where possible
+        self._deunicode(document)
 
         # Return the document
         return document
@@ -190,7 +223,7 @@ class CouchDB(object):
 
         :param str document_id: The document_id with views
         :param str view_name: The name of the view in the document
-        :returns: dict
+        :rtype: dict
         :raises: DocumentNotFound
         :raises: DocumentRetrievalFailure
 

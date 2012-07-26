@@ -5,7 +5,7 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 import logging
 import requests
@@ -71,16 +71,20 @@ class CouchDB(object):
         :rtype: any
 
         """
+        logger.debug('Processing %r', node)
         if isinstance(node, unicode):
             try:
                 return node.decode('ascii')
             except UnicodeEncodeError:
+                logger.debug('Not changing unicode string: %r', node)
                 return node
         elif isinstance(node, dict):
             for key in node:
-                self._process_node(node[key])
+                logger.debug('Processing dict')
+                node[key] = self._process_node(node[key])
             return node
         elif isinstance(node, list):
+            logger.debug('Processing list')
             for position in xrange(0, len(node)):
                 node[position] = self._process_node(node[position])
             return node
@@ -132,7 +136,7 @@ class CouchDB(object):
         # If the status code is 200, it was a successful request
         if response.status_code == 200:
             logger.debug('Document retrieved successfully')
-            return self._deunicode(response.json)
+            return response.json
 
         # Raise the error that we did not find the document
         self._error(response)
@@ -208,7 +212,7 @@ class CouchDB(object):
         url = self._document_url(document_id)
 
         # Request the document
-        document = self._get_couchdb_value(url)
+        document = self._deunicode(self._get_couchdb_value(url))
 
         if self._strip_attributes:
             self._strip(document)
@@ -230,7 +234,7 @@ class CouchDB(object):
         url = self._view_url(document_id, view_name)
 
         # Request the document
-        document = self._get_couchdb_value(url)
+        document = self._deunicode(self._get_couchdb_value(url))
 
         # Return the view data
         return self._view_data(document)

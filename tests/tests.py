@@ -3,6 +3,7 @@
 test_client.py
 
 """
+import mock
 import unittest
 
 import couchclient
@@ -120,3 +121,25 @@ class CouchClientTests(unittest.TestCase):
             }
         }
         self.assertDictEqual(self._client._deunicode(value), expectation)
+
+    def test_get_document(self):
+        value = {u'rabbitmq_exchange': u'generate_email',
+                 u'delivery_interval': 1209600,
+                 u'_rev': u'13-f91648adcfffde15b8587fa69e7adcb0',
+                 u'redis': {u'host': u'redis01.scs.myyearbook.com', u'db': 7,
+                            u'port': 6379}, u'rabbitmq': {u'exchange':
+                u'generate_email', u'vhost': u'messaging', u'host': u'rabbit19',
+                u'user': u'rejected', u'pass': u'rabbitmq', u'port': 5672},
+                u'_id': u'seedlist'}
+
+        expectation = {u'rabbitmq_exchange': 'generate_email',
+                       u'delivery_interval': 1209600, u'redis': {u'host':
+                       'redis01.scs.myyearbook.com', u'db': 7, u'port': 6379},
+                       u'rabbitmq': {u'exchange': 'generate_email', u'vhost':
+                       'messaging', u'host': 'rabbit19', u'user': 'rejected',
+                       u'pass': 'rabbitmq', u'port': 5672}}
+
+        with mock.patch.object(self._client,
+                               '_get_couchdb_value') as mock_method:
+            mock_method.return_value = value
+            self.assertDictEqual(self._client.get_document('foo'), expectation)

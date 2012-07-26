@@ -7,14 +7,9 @@ __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@myyearbook.com'
 __since__ = '2012-01-31'
 
-import sys
-sys.path.insert(0, '..')
-
-import mock
-import nose
-import couchclient
-import json
 import unittest
+
+import couchclient
 
 _HTTP_SERVER = {'host': 'unittest.info',
                 'port': 5984,

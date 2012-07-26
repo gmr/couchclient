@@ -5,8 +5,9 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
+import copy
 import logging
 import requests
 import urllib
@@ -60,9 +61,11 @@ class CouchDB(object):
         :rtype: dict
 
         """
+        new = copy.deepcopy(value)
         for key in value:
-            value[key] = self._process_node(value[key])
-        return value
+            new[key] = self._process_node(value[key])
+        logger.debug('Returning: %r', new)
+        return new
 
     def _process_node(self, node):
         """Process a node to strip unicode from it if possible.
@@ -74,21 +77,23 @@ class CouchDB(object):
         logger.debug('Processing %r', node)
         if isinstance(node, unicode):
             try:
-                return node.decode('ascii')
+                return str(node.decode('ascii'))
             except UnicodeEncodeError:
                 logger.debug('Not changing unicode string: %r', node)
                 return node
+
         elif isinstance(node, dict):
+            new = dict()
             for key in node:
-                logger.debug('Processing dict')
-                node[key] = self._process_node(node[key])
-            return node
+                new[key] = self._process_node(node[key])
+            return new
+
         elif isinstance(node, list):
-            logger.debug('Processing list')
-            for position in xrange(0, len(node)):
-                node[position] = self._process_node(node[position])
-            return node
-        logger.debug('Bypassing type: %r', type(node))
+            new = list()
+            for item in node:
+                new.append(self._process_node(item))
+            return new
+
         return node
 
     def _document_url(self, document_id):

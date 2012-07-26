@@ -4,7 +4,10 @@ test_client.py
 
 """
 import mock
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import couchclient
 
@@ -142,4 +145,7 @@ class CouchClientTests(unittest.TestCase):
         with mock.patch.object(self._client,
                                '_get_couchdb_value') as mock_method:
             mock_method.return_value = value
-            self.assertDictEqual(self._client.get_document('foo'), expectation)
+            value = self._client.get_document('foo')
+            for key in expectation:
+                if isinstance(expectation[key], unicode):
+                    self.assertIsInstance(value[key], str)

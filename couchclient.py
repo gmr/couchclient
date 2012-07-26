@@ -5,7 +5,7 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 import logging
 import requests
@@ -57,10 +57,12 @@ class CouchDB(object):
         """Iterate the keys in value removing unicode values if possible.
 
         :param dict value: The dict to iterate
+        :rtype: dict
 
         """
         for key in value:
             value[key] = self._process_node(value[key])
+        return value
 
     def _process_node(self, node):
         """Process a node to strip unicode from it if possible.
@@ -130,7 +132,7 @@ class CouchDB(object):
         # If the status code is 200, it was a successful request
         if response.status_code == 200:
             logger.debug('Document retrieved successfully')
-            return response.json
+            return self._deunicode(response.json)
 
         # Raise the error that we did not find the document
         self._error(response)
@@ -210,9 +212,6 @@ class CouchDB(object):
 
         if self._strip_attributes:
             self._strip(document)
-
-        # Change unicode values to str where possible
-        self._deunicode(document)
 
         # Return the document
         return document

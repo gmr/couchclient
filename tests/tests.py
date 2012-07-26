@@ -67,8 +67,8 @@ class CouchClientTests(unittest.TestCase):
                        u'user': 'rejected',
                        u'pass': 'rabbitmq',
                        u'port': 5672}
-        self._client._deunicode(value)
-        self.assertDictEqual(value, expectation)
+
+        self.assertDictEqual(self._client._deunicode(value), expectation)
 
     def test_deunicode_complex_with_unicode(self):
         value = {
@@ -119,5 +119,4 @@ class CouchClientTests(unittest.TestCase):
                 }}]
             }
         }
-        self._client._deunicode(value)
-        self.assertDictEqual(value, expectation)
+        self.assertDictEqual(self._client._deunicode(value), expectation)

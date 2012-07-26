@@ -3,10 +3,6 @@
 test_client.py
 
 """
-__author__ = 'Gavin M. Roy'
-__email__ = 'gmr@myyearbook.com'
-__since__ = '2012-01-31'
-
 import unittest
 
 import couchclient

@@ -5,7 +5,7 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 
 import logging
 import requests

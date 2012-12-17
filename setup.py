@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='couchclient',
-      version='1.4.3',
+      version='1.4.4',
       description=('Light-weight read-only CouchDB client for loading '
                    'documents and views'),
       maintainer='Gavin M. Roy',

@@ -7,12 +7,11 @@ __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
 __version__ = '1.4.3'
 
-import copy
 import logging
 import requests
 import urllib
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class CouchDB(object):
@@ -53,7 +52,6 @@ class CouchDB(object):
                                   self._server['host'],
                                   self._server['port'],
                                   self._database)
-
     def _deunicode(self, value):
         """Iterate the keys in value removing unicode values if possible.
 
@@ -61,11 +59,12 @@ class CouchDB(object):
         :rtype: dict
 
         """
-        new = copy.deepcopy(value)
+        LOGGER.debug('Received %r', value)
+        new_value = dict()
         for key in value:
-            new[key] = self._process_node(value[key])
-        logger.debug('Returning: %r', new)
-        return new
+            new_value[key] = self._process_node(value[key])
+        LOGGER.debug('Returning: %r', new_value)
+        return new_value
 
     def _process_node(self, node):
         """Process a node to strip unicode from it if possible.
@@ -74,12 +73,12 @@ class CouchDB(object):
         :rtype: any
 
         """
-        logger.debug('Processing %r', node)
+        LOGGER.debug('Processing %r', node)
         if isinstance(node, unicode):
             try:
                 return str(node.decode('ascii'))
             except UnicodeEncodeError:
-                logger.debug('Not changing unicode string: %r', node)
+                LOGGER.debug('Not changing unicode string: %r', node)
                 return node
 
         elif isinstance(node, dict):
@@ -140,8 +139,7 @@ class CouchDB(object):
 
         # If the status code is 200, it was a successful request
         if response.status_code == 200:
-            logger.debug('Document retrieved successfully')
-            return response.json
+            return response.json()
 
         # Raise the error that we did not find the document
         self._error(response)
@@ -155,7 +153,7 @@ class CouchDB(object):
         :raises: DocumentRetrievalFailure
 
         """
-        logger.debug('Making HTTP GET request to %s', url)
+        LOGGER.debug('Making HTTP GET request to %s', url)
         return requests.get(url)
 
     def _quote(self, value):
@@ -174,7 +172,7 @@ class CouchDB(object):
         :param dict document: The returned document
 
         """
-        logger.debug('Removing %r from %r',
+        LOGGER.debug('Removing %r from %r',
                      CouchDB._COUCHDB_ATTRIBUTES, document)
         for attribute in CouchDB._COUCHDB_ATTRIBUTES:
             del document[attribute]
@@ -187,7 +185,7 @@ class CouchDB(object):
         :returns dict: Processed view data
 
         """
-        logger.debug('Transforming %i rows', len(document['rows']))
+        LOGGER.debug('Transforming %i rows', len(document['rows']))
         view_data = dict()
         for row in document['rows']:
             view_data[row['key']] = row['value']

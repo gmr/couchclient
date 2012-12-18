@@ -5,14 +5,14 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.5'
+__version__ = '1.4.7'
 
 import logging
 import requests
 import urllib
 
 from requests import adapters
-adapters.DEFAULT_POOL_SIZE = 32
+adapters.DEFAULT_POOL_SIZE = 4
 
 LOGGER = logging.getLogger(__name__)
 

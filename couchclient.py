@@ -5,11 +5,14 @@ CouchDB Client
 __author__ = 'Gavin M. Roy'
 __email__ = 'gmr@meetme.com'
 __since__ = '2012-01-30'
-__version__ = '1.4.4'
+__version__ = '1.4.5'
 
 import logging
 import requests
 import urllib
+
+from requests import adapters
+adapters.DEFAULT_POOL_SIZE = 32
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +41,9 @@ class CouchDB(object):
         # Set the database name
         self._database = database
 
+        # Setup a requests session
+        self._session = requests.session()
+
         # Set the strip attribute
         self._strip_attributes = strip_attributes
 
@@ -52,6 +58,7 @@ class CouchDB(object):
                                   self._server['host'],
                                   self._server['port'],
                                   self._database)
+
     def _deunicode(self, value):
         """Iterate the keys in value removing unicode values if possible.
 
@@ -59,11 +66,9 @@ class CouchDB(object):
         :rtype: dict
 
         """
-        LOGGER.debug('Received %r', value)
         new_value = dict()
         for key in value:
             new_value[key] = self._process_node(value[key])
-        LOGGER.debug('Returning: %r', new_value)
         return new_value
 
     def _process_node(self, node):
@@ -73,7 +78,6 @@ class CouchDB(object):
         :rtype: any
 
         """
-        LOGGER.debug('Processing %r', node)
         if isinstance(node, unicode):
             try:
                 return str(node.decode('ascii'))
@@ -113,7 +117,7 @@ class CouchDB(object):
         :raises: DocumentRetrievalFailure
 
         """
-        document = response.json
+        document = response.json()
         error_message = 'Error: %s, reason: %s' % (document['error'],
                                                    document['reason'])
         if response.status_code == 404:
@@ -136,12 +140,8 @@ class CouchDB(object):
 
         """
         response = self._http_request(url)
-
-        # If the status code is 200, it was a successful request
         if response.status_code == 200:
             return response.json()
-
-        # Raise the error that we did not find the document
         self._error(response)
 
     def _http_request(self, url):
@@ -153,8 +153,7 @@ class CouchDB(object):
         :raises: DocumentRetrievalFailure
 
         """
-        LOGGER.debug('Making HTTP GET request to %s', url)
-        return requests.get(url)
+        return self._session.get(url)
 
     def _quote(self, value):
         """Return a quoted value, escaping bits for CouchDB.
@@ -185,7 +184,6 @@ class CouchDB(object):
         :returns dict: Processed view data
 
         """
-        LOGGER.debug('Transforming %i rows', len(document['rows']))
         view_data = dict()
         for row in document['rows']:
             view_data[row['key']] = row['value']
